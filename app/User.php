@@ -32,6 +32,11 @@ class User extends Authenticatable
         return $this->hasMany(Micropost::class);
     }
     
+    public function favposts()
+    {
+        return $this->belongsToMany(Micropost::class, 'user_fav', 'user_id', 'micropost_id')->withTimestamps();
+    }
+    
      public function followings()
     {
         return $this->belongsToMany(User::class, 'user_follow', 'user_id', 'follow_id')->withTimestamps();
@@ -86,4 +91,40 @@ class User extends Authenticatable
         return Micropost::whereIn('user_id', $follow_user_ids);
     }
 
+    public function is_fav($userId)
+    {
+        return $this->favposts()->where('micropost_id', $userId)->exists();
+    }
+    
+    public function fav($userId)
+    {
+    $exist = $this->is_fav($userId);
+    //$its_me = $this->id == $userId;
+    if ($exist) {
+        return false;
+    } else {
+        $this->favposts()->attach($userId);
+        return true;
+        }
+    }
+
+    public function unfav($userId)
+    {
+    $exist = $this->is_fav($userId);
+    //$its_me = $this->id == $userId;
+
+    if ($exist) {
+        $this->favposts()->detach($userId);
+        return true;
+    } else {
+        return false;
+        }
+    }
+    
+    public function feed_favposts()
+    {
+        $fav_post_ids = $this->favposts()-> pluck('microposts.id')->toArray();
+        
+        return Micropost::whereIn('micropost_id', $fav_post_ids);
+    }
 }

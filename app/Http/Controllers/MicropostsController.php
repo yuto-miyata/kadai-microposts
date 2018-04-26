@@ -15,10 +15,12 @@ class MicropostsController extends Controller
         if (\Auth::check()) {
             $user = \Auth::user();
             $microposts = $user->feed_microposts()->orderBy('created_at', 'desc')->paginate(10);
+            //$favposts = $user->feed_favposts()->orderBy('created_at', 'desc')->paginate(10);
 
             $data = [
                 'user' => $user,
                 'microposts' => $microposts,
+                //'favposts' => $favposts,
             ];
             $data += $this->counts($user);
             return view('users.show', $data);
@@ -65,5 +67,30 @@ class MicropostsController extends Controller
         }
         
         return redirect()->back();
+    }
+    
+    public function fav($userId)
+    {
+    $exist = $this->is_fav($userId);
+    //$its_me = $this->id == $userId;
+    if ($exist) {
+        return false;
+    } else {
+        $this->favposts()->attach($userId);
+        return true;
+        }
+    }
+
+    public function unfav($userId)
+    {
+    $exist = $this->is_fav($userId);
+    //$its_me = $this->id == $userId;
+
+    if ($exist) {
+        $this->favposts()->detach($userId);
+        return true;
+    } else {
+        return false;
+        }
     }
 }
